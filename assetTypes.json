@@ -1,0 +1,238 @@
+{
+	"2": {
+		"name": "TShirt",
+		"ext": "rbxm"
+	},
+	"3": {
+		"name": "Audio",
+		"ext": "ogg"
+	},
+	"4": {
+		"name": "Mesh",
+		"ext": "mesh"
+	},
+	"5": {
+		"name": "Lua",
+		"ext": "lua"
+	},
+	"8": {
+		"name": "Hat",
+		"ext": "rbxm"
+	},
+	"9": {
+		"name": "Place",
+		"ext": "rbxl"
+	},
+	"10": {
+		"name": "Model",
+		"ext": "rbxm"
+	},
+	"11": {
+		"name": "Shirt",
+		"ext": "rbxm"
+	},
+	"12": {
+		"name": "Pants",
+		"ext": "rbxm"
+	},
+	"13": {
+		"name": "Decal",
+		"ext": "png"
+	},
+	"17": {
+		"name": "Head",
+		"ext": "rbxm"
+	},
+	"18": {
+		"name": "Face",
+		"ext": "rbxm"
+	},
+	"19": {
+		"name": "Gear",
+		"ext": "rbxm"
+	},
+	"21": {
+		"name": "Badge",
+		"ext": ""
+	},
+	"24": {
+		"name": "Animation",
+		"ext": ""
+	},
+	"27": {
+		"name": "Torso",
+		"ext": "rbxm"
+	},
+	"28": {
+		"name": "RightArm",
+		"ext": "rbxm"
+	},
+	"29": {
+		"name": "LeftArm",
+		"ext": "rbxm"
+	},
+	"30": {
+		"name": "LeftLeg",
+		"ext": "rbxm"
+	},
+	"31": {
+		"name": "RightLeg",
+		"ext": "rbxm"
+	},
+	"32": {
+		"name": "Package",
+		"ext": ""
+	},
+	"34": {
+		"name": "GamePass",
+		"ext": ""
+	},
+	"38": {
+		"name": "Plugin",
+		"ext": "rbxm"
+	},
+	"40": {
+		"name": "MeshPart",
+		"ext": "mesh"
+	},
+	"41": {
+		"name": "HairAccessory",
+		"ext": "rbxm"
+	},
+	"42": {
+		"name": "FaceAccessory",
+		"ext": "rbxm"
+	},
+	"43": {
+		"name": "NeckAccessory",
+		"ext": "rbxm"
+	},
+	"44": {
+		"name": "ShoulderAccessory",
+		"ext": "rbxm"
+	},
+	"45": {
+		"name": "FrontAccessory",
+		"ext": "rbxm"
+	},
+	"46": {
+		"name": "BackAccessory",
+		"ext": "rbxm"
+	},
+	"47": {
+		"name": "WaistAccessory",
+		"ext": "rbxm"
+	},
+	"48": {
+		"name": "ClimbAnimation",
+		"ext": ""
+	},
+	"49": {
+		"name": "DeathAnimation",
+		"ext": ""
+	},
+	"50": {
+		"name": "FallAnimation",
+		"ext": ""
+	},
+	"51": {
+		"name": "IdleAnimation",
+		"ext": ""
+	},
+	"52": {
+		"name": "JumpAnimation",
+		"ext": ""
+	},
+	"53": {
+		"name": "RunAnimation",
+		"ext": ""
+	},
+	"54": {
+		"name": "SwimAnimation",
+		"ext": ""
+	},
+	"55": {
+		"name": "WalkAnimation",
+		"ext": ""
+	},
+	"56": {
+		"name": "PoseAnimation",
+		"ext": ""
+	},
+	"57": {
+		"name": "EarAccessory",
+		"ext": "rbxm"
+	},
+	"58": {
+		"name": "EyeAccessory",
+		"ext": "rbxm"
+	},
+	"61": {
+		"name": "EmoteAnimation",
+		"ext": ""
+	},
+	"62": {
+		"name": "Video",
+		"ext": "webm"
+	},
+	"64": {
+		"name": "TShirtAccessory",
+		"ext": "rbxm"
+	},
+	"65": {
+		"name": "ShirtAccessory",
+		"ext": "rbxm"
+	},
+	"66": {
+		"name": "PantsAccessory",
+		"ext": "rbxm"
+	},
+	"67": {
+		"name": "JacketAccessory",
+		"ext": "rbxm"
+	},
+	"68": {
+		"name": "SweaterAccessory",
+		"ext": "rbxm"
+	},
+	"69": {
+		"name": "ShortsAccessory",
+		"ext": "rbxm"
+	},
+	"70": {
+		"name": "LeftShoeAccessory",
+		"ext": "rbxm"
+	},
+	"71": {
+		"name": "RightShoeAccessory",
+		"ext": "rbxm"
+	},
+	"72": {
+		"name": "DressSkirtAccessory",
+		"ext": "rbxm"
+	},
+	"73": {
+		"name": "FontFamily",
+		"ext": "rbxm"
+	},
+	"74": {
+		"name": "Font",
+		"ext": "ttf"
+	},
+	"76": {
+		"name": "EyebrowAccessory",
+		"ext": "rbxm"
+	},
+	"77": {
+		"name": "EyelashAccessory",
+		"ext": "rbxm"
+	},
+	"78": {
+		"name": "MoodAnimation",
+		"ext": ""
+	},
+	"79": {
+		"name": "DynamicHead",
+		"ext": ""
+	}
+}
