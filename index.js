@@ -14,6 +14,10 @@ if (!fs.existsSync("./tmp/")) {
     fs.mkdirSync("./tmp/")
 }
 
+if (!fs.existsSync("./backups/")) {
+    fs.mkdirSync("./backups/")
+}
+
 const hashFile = (filePath) => {
     return new Promise((resolve, reject) => {
         const hash = crypto.createHash('sha1')
