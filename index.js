@@ -87,7 +87,8 @@ Client.on("interactionCreate", async (interaction) => {
 			if (!assetId) return interaction.reply({ ephemeral: true, content: "How'd you even manage to run this without sending an ID. Whatever, put an ID in dingus." });
 			channel = interaction.options.getChannel("channel") || interaction.channel
 			await interaction.deferReply({ ephemeral: true })
-			productName = interaction.options.getString("name") || productInfo.Name
+			assetInfo = await bulk.fetchAssetInfo({[assetId]: true})
+			productName = interaction.options.getString("name") || assetInfo[assetId].asset.name
 			db.push(`/ids/${assetId}`, {
 				"name": productName,
 				"hash": "",
