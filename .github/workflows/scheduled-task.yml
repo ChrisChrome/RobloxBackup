@@ -2,7 +2,7 @@ name: Run Node.js script every 4 hours and push changes
 
 on:
   schedule:
-    - cron: '0 0,12 * * *'  # This means "every 4 hours"
+    - cron: '0 7,19 * * *'  # This means "every 4 hours"
 
   # Allows for manual trigger if needed
   workflow_dispatch:
