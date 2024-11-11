@@ -211,6 +211,11 @@ const downloadFiles = async (ovr) => {
 												inline: true
 											},
 											{
+												name: "Asset ID",
+												value: `\`${id}\``,
+												inline: true
+											},
+											{
 												name: "Creator",
 												value: `[${assetInfo[id].creator.name}](https://roblox.com/${assetInfo[id].creator.type == 2 ? "groups" : "users"}/${assetInfo[id].creator.id}/profile)`,
 												inline: true
