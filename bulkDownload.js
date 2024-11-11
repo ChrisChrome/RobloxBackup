@@ -1,6 +1,6 @@
 const codes = require("./codes.json")
 const assetTypes = require("./assetTypes.json")
-bulk = async (assetIds, inputCookie) => {
+const bulk = async (assetIds, inputCookie) => {
 	// Impliment a rate limit of 25 requests per minute
 	if (!assetIds || !Array.isArray(assetIds)) {
 		return {
@@ -102,4 +102,37 @@ bulk = async (assetIds, inputCookie) => {
 	}
 }
 
-module.exports = bulk;
+function fetchAssetInfo(ids) {
+	return new Promise(async (resolve, reject) => {
+		try {
+			// Fetch asset information using fetch and the provided asset IDs
+			const response = await fetch(`https://apis.roblox.com/toolbox-service/v1/items/details?assetIds=${Object.keys(ids).map(id => id).join(",")}`);
+
+			// Check if the response is successful
+			if (!response.ok) {
+				throw new Error(`Failed to fetch data: ${response.statusText}`);
+			}
+
+			// Parse the JSON response
+			const rawAssetInfo = await response.json();
+
+			// Transform the data into an object mapping asset IDs to their details
+			const assetInfo = rawAssetInfo.data.reduce((acc, item) => {
+				const assetId = item.asset.id;
+				acc[assetId] = item;
+				return acc;
+			}, {});
+			
+			// Resolve the promise with the result of the bulk operation
+			resolve(assetInfo);
+		} catch (error) {
+			// Reject the promise if an error occurs
+			console.error('Error fetching asset info:', error);
+			reject(error);  // Reject with the error
+		}
+	});
+}
+
+
+
+module.exports = {bulk: bulk, fetchAssetInfo: fetchAssetInfo};

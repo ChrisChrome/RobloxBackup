@@ -3,10 +3,11 @@ const bulk = require("./bulkDownload.js")
 const path = require("path")
 const axios = require("axios")
 const jsondb = require("node-json-db")
-const db = new jsondb.JsonDB(new jsondb.Config("database", true, true, "/", true))
 const fs = require('fs-extra')
 const cron = require("node-cron")
 const crypto = require("crypto")
+const noblox = require("noblox.js")
+noblox.setCookie(process.env.COOKIE)
 console.log(fs.readdirSync("."))
 if (!fs.existsSync("./tmp/")) {
 	fs.mkdirSync("./tmp/")
@@ -25,6 +26,82 @@ const Client = new Discord.Client({
 		"Guilds"
 	]
 })
+const db = new jsondb.JsonDB(new jsondb.Config("database", true, true, "/", true))
+const {
+	REST,
+	Routes
+} = require('discord.js');
+const rest = new REST({
+	version: '10'
+}).setToken(process.env.TOKEN);
+
+const commands = [
+	{
+		name: "track",
+		description: "Start tracking an asset",
+		contexts: [0, 1, 2],
+		integration_types: [0, 1],
+		options: [
+			{
+				name: "id",
+				description: "Asset ID",
+				type: 4,
+				required: true
+			},
+			{
+				name: "name",
+				type: Discord.ApplicationCommandOptionType.String,
+				required: false,
+				description: "Allows you to manually set a name for the asset, otherwise it'll use the one from Roblox"
+			},
+			{
+				name: "channel",
+				description: "If this isn't set, it'll just use the current channel",
+				type: 7
+			}
+		],
+		default_member_permissions: 8
+	}
+]
+
+Client.on('ready', async () => {
+	console.log(`Logged in as ${Client.user.displayName}`)
+	downloadFiles()
+	cron.schedule("0 * * * *", downloadFiles)
+	console.log("Started Cron Job!")
+	await (async () => {
+		try {
+			//Global
+			console.log(`Registering global commands`);
+			await rest.put(Routes.applicationCommands(Client.user.id), { body: commands })
+		} catch (error) {
+			console.error(error);
+		}
+	})();
+});
+Client.on("interactionCreate", async (interaction) => {
+	if (!interaction.isCommand()) return;
+	switch (interaction.commandName) {
+		case "track":
+			assetId = interaction.options.getInteger("id");
+			if (!assetId) return interaction.reply({ ephemeral: true, content: "How'd you even manage to run this without sending an ID. Whatever, put an ID in dingus." });
+			channel = interaction.options.getChannel("channel") || interaction.channel
+			await interaction.deferReply({ ephemeral: true })
+			productName = interaction.options.getString("name") || productInfo.Name
+			db.push(`/ids/${assetId}`, {
+				"name": productName,
+				"hash": "",
+				"discord_channel": channel.id,
+				"filesize": 0
+			})
+			downloadFiles(assetId.toString()).then(() => {
+				interaction.editReply({ ephemeral: true, content: "Done!" })
+			})
+			break;
+	}
+})
+
+
 
 const hashFile = (filePath) => {
 	return new Promise((resolve, reject) => {
@@ -66,11 +143,13 @@ function humanFileSize(bytes, si = false, dp = 1) {
 	return bytes.toFixed(dp) + ' ' + units[u];
 }
 
-const downloadFiles = async () => {
-	const ids = await db.getData("/ids");
-	const data = await bulk(Object.keys(ids).map(id => id));
-
+const downloadFiles = async (ovr) => {
+	const dbData = await db.getData("/ids");
+	const ids = ovr ? { [ovr]: dbData[ovr] } : null || dbData
+	const data = await bulk.bulk(Object.keys(ids).map(id => id));
+	const assetInfo = await bulk.fetchAssetInfo(ids)
 	const fileDownloadPromises = Object.keys(data.data).map(async (id) => {
+		channel = await Client.channels.fetch(ids[id].discord_channel)
 		const fileData = data.data[id];
 
 		if (fileData.status === 'success') {
@@ -95,14 +174,12 @@ const downloadFiles = async () => {
 							if (hash !== ids[id].hash) {
 								console.log(`File ${fileName} has changed`);
 								size = fs.statSync(filePath).size
-								channel = await Client.channels.fetch(ids[id].discord_channel)
 								file = new Discord.AttachmentBuilder(Buffer.from(fs.readFileSync(filePath)), { name: fileName })
 								channel.send({
 									embeds: [{
 										color: 0x00ff00,
-										title: 'File Changed',
+										title: assetInfo[id].asset.name,
 										url: `https://create.roblox.com/store/asset/${id}`,
-										description: `ID: \`${id}\`\n<t:${Math.floor(new Date() / 1000)}:f>`,
 										fields: [
 											{
 												name: "Old Hash",
@@ -117,11 +194,31 @@ const downloadFiles = async () => {
 											{
 												name: "Old Filesize",
 												value: humanFileSize(ids[id].filesize),
-												inline: false
+												inline: true
 											},
 											{
 												name: "New Filesize",
 												value: humanFileSize(size),
+												inline: true
+											},
+											{
+												name: "Asset Name",
+												value: assetInfo[id].asset.name,
+												inline: true
+											},
+											{
+												name: "Creator",
+												value: `[${assetInfo[id].creator.name}](https://roblox.com/${assetInfo[id].creator.type == 2 ? "groups" : "users"}/${assetInfo[id].creator.id}/profile)`,
+												inline: true
+											},
+											{
+												name: "Asset Description",
+												value: assetInfo[id].asset.description,
+												inline: false
+											},
+											{
+												name: "Timestamps",
+												value: `Created: <t:${Math.floor(new Date(assetInfo[id].asset.createdUtc) / 1000)}>\nUpdated: <t:${Math.floor(new Date(assetInfo[id].asset.updatedUtc) / 1000)}>`,
 												inline: true
 											}
 										]
@@ -151,7 +248,21 @@ const downloadFiles = async () => {
 			}
 		} else {
 			console.log(`Failed to download file for ID: ${id}`);
-
+			channel.send({
+				embeds: [
+					{
+						title: `Error!`,
+						color: 0xff0000,
+						description: `An error occured while trying to check for new versions of this asset!`,
+						fields: [
+							{
+								name: "Error",
+								value: `${fileData.code} ${fileData.message}\n\`${fileData.additional}\``
+							}
+						]
+					}
+				]
+			})
 		}
 	});
 
@@ -164,11 +275,5 @@ const downloadFiles = async () => {
 	}
 }
 
-Client.on('ready', async () => {
-	console.log(`Logged in as ${Client.user.displayName}`)
-	await downloadFiles();
-	cron.schedule("0 * * * *", downloadFiles)
-	console.log("Started Cron Job!")
-});
 
 Client.login(process.env.TOKEN)
