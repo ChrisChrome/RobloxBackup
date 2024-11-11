@@ -18,6 +18,9 @@ if (!fs.existsSync("./backups/")) {
     fs.mkdirSync("./backups/")
 }
 
+const Discord = require("discord.js")
+const hook = new Discord.WebhookClient({ url: process.env.WEBHOOK })
+
 const hashFile = (filePath) => {
     return new Promise((resolve, reject) => {
         const hash = crypto.createHash('sha1')
@@ -65,6 +68,24 @@ const downloadFiles = async () => {
 
                             if (hash !== ids[id].hash) {
                                 console.log(`File ${fileName} has changed, saving to Git repo...`);
+								hook.send({
+									embeds: [{
+										color: 0x00ff00,
+										title: fileName,
+										description: `File has changed!`,
+										fields: [
+											{
+												name: "Old Hash",
+												value: ids[id].hash
+											},
+											{
+												name: "New Hash",
+												value: hash
+											}
+										],
+										timestamp: new Date()
+									}]
+								})
                                 await fs.copyFile(filePath, path.join(__dirname, "/backups/", fileName))
 
                                 // Update the hash in the database

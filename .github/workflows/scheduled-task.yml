@@ -30,6 +30,7 @@ jobs:
       run: node .  # Assumes your script is the entry point (index.js or equivalent)
       env:
         COOKIE: ${{ secrets.ROBLOX_COOKIE }}
+        WEBHOOK: ${{ secrets.WEBOOK }}
     - name: Check if there are changes to commit
       run: |
         git diff --exit-code || echo "There are changes to commit"  # Skip if no changes
