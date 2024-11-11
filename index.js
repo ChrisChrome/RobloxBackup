@@ -147,7 +147,7 @@ const downloadFiles = async (ovr) => {
 	try {
 		const dbData = await db.getData("/ids");
 	} catch {
-		console.log("No DB, add an asset perhaps?")
+		return console.log("No DB, add an asset perhaps?")
 	}
 	const ids = ovr ? { [ovr]: dbData[ovr] } : null || dbData
 	const data = await bulk.bulk(Object.keys(ids).map(id => id));
