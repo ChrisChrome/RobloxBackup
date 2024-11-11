@@ -6,7 +6,7 @@ const jsondb = require("node-json-db")
 const db = new jsondb.JsonDB(new jsondb.Config("database", true, true, "/", true))
 const fs = require('fs-extra')
 const crypto = require("crypto")
-console.log(fs.readdirSync())
+console.log(fs.readdirSync("."))
 if (!fs.existsSync("./tmp/")) {
     fs.mkdirSync("./tmp/")
 } else {
