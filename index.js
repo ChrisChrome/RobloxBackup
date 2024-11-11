@@ -10,6 +10,8 @@ const fs = require('fs-extra')
 const cron = require("node-cron")
 const crypto = require("crypto")
 const { exec } = require('child_process')
+const express = require("express");
+const app = express()
 
 // Git repo setup
 const gitRepoDir = './git'
@@ -21,20 +23,15 @@ if (!fs.existsSync(gitRepoDir)) {
 		dir: gitRepoDir
 	})
 }
-// if (!fs.existsSync(path.join(gitRepoDir, "/.git/refs/remotes/"))) {
-// 	git.addRemote({
-// 		fs,
-// 		dir: gitRepoDir,
-// 		remote: 'origin',
-// 		url: process.env.GIT_REPO
-// 	})
-// }
+
 if (!fs.existsSync("./tmp/")) {
     fs.mkdirSync("./tmp/")
 } else {
     fs.rmSync("./tmp/", {recursive: true, force: true})
     fs.mkdirSync("./tmp/")
 }
+
+app.use(express.static(gitRepoDir));
 
 const hashFile = (filePath) => {
     return new Promise((resolve, reject) => {
@@ -83,79 +80,98 @@ const saveToGitRepo = async (filePath, fileName, id) => {
 }
 
 const downloadFiles = async () => {
-    const ids = await db.getData("/ids")
-    const data = await bulk(Object.keys(ids).map(id => id))
+    const ids = await db.getData("/ids");
+    const data = await bulk(Object.keys(ids).map(id => id));
     
-    for (const id in data.data) {
-        const fileData = data.data[id]
-        
+    const fileDownloadPromises = Object.keys(data.data).map(async (id) => {
+        const fileData = data.data[id];
+
         if (fileData.status === 'success') {
             try {
-                const { url, type } = fileData
-                const fileName = `${ids[id].name}.${type.ext}`
-                const filePath = path.join('./tmp', fileName)
+                const { url, type } = fileData;
+                const fileName = `${ids[id].name}.${type.ext}`;
+                const filePath = path.join('./tmp', fileName);
 
                 // Download the file using axios
-                const response = await axios.get(url, { responseType: 'stream' })
+                const response = await axios.get(url, { responseType: 'stream' });
 
-                // Pipe the data to the file path
-                const writer = fs.createWriteStream(filePath)
-                response.data.pipe(writer)
+                // Return a Promise that resolves when the file is downloaded and processed
+                return new Promise((resolve, reject) => {
+                    const writer = fs.createWriteStream(filePath);
+                    response.data.pipe(writer);
 
-                writer.on('finish', async () => {
-                    console.log(`Downloaded file: ${fileName}!`)
-                    const hash = await hashFile(filePath)
+                    writer.on('finish', async () => {
+                        try {
+                            console.log(`Downloaded file: ${fileName}!`);
+                            const hash = await hashFile(filePath);
 
-                    if (hash !== ids[id].hash) {
-                        console.log(`File ${fileName} has changed, saving to Git repo...`)
-                        await saveToGitRepo(filePath, fileName, id)
+                            if (hash !== ids[id].hash) {
+                                console.log(`File ${fileName} has changed, saving to Git repo...`);
+                                await saveToGitRepo(filePath, fileName, id);
 
-                        // Update the hash in the database
-                        db.push(`/ids/${id}/hash`, hash)
-                    } else {
-                        console.log(`No changes for file ${fileName}`)
-                    }
-                })
+                                // Update the hash in the database
+                                db.push(`/ids/${id}/hash`, hash);
+                            } else {
+                                console.log(`No changes for file ${fileName}`);
+                            }
 
-                writer.on('error', (err) => {
-                    console.error(`Error downloading file ${fileName}: ${err.message}`)
-                })
+                            resolve(); // Resolve the Promise when all is done
+                        } catch (err) {
+                            reject(err); // Reject if there's an error during processing
+                        }
+                    });
+
+                    writer.on('error', (err) => {
+                        reject(new Error(`Error downloading file ${fileName}: ${err.message}`));
+                    });
+                });
             } catch (error) {
-                console.error(`Error processing file ${id}: ${error.message}`)
+                console.error(`Error processing file ${id}: ${error.message}`);
             }
         } else {
-            console.log(`Failed to download file for ID: ${id}`)
+            console.log(`Failed to download file for ID: ${id}`);
         }
+    });
+
+    // Wait for all file download promises to complete
+    try {
+        await Promise.all(fileDownloadPromises);
+        console.log('All files processed successfully!');
+    } catch (error) {
+        console.error('Error processing some files:', error);
     }
 }
 
-// const pushChanges = async () => {
-// 	//if (!process.env.GIT_TOKEN) return false;
-// 	console.log("Attempting to push!")
-// 	try {
-		
-//         await git.push({
-//             fs,
-// 			http,
-// 			url: process.env.GIT_REPO,
-			
-//             dir: gitRepoDir,
-//             remote: 'origin',
-//             ref: 'main', // or 'master' depending on your repo
-// 			username: process.env.GIT_USERNAME,
-// 			token: process.env.GIT_TOKEN,
-// 			force: true
-//         })
-//         console.log(`Update for ${new Date().toUTCString()}`)
-//     } catch (error) {
-//         console.error(`Error pushing changes: ${error.message}`)
-//     }
-// }
-
-const main = async () => {
-	downloadFiles().then(() => {
-		// pushChanges()
-	})
+const pushChanges = async () => {
+	//if (!process.env.GIT_TOKEN) return false;
+	console.log("Attempting to push!")
+	try {
+		console.log(process.env.GIT_REPO)
+        await git.push({
+            fs,
+			http,
+            dir: gitRepoDir,
+            remote: 'upstream',
+			url: "https://git.chrischro.me/KCA/RobloxBackups",
+            ref: 'main', // or 'master' depending on your repo
+			onAuth: () => ({ username: process.env.GIT_USERNAME, token: process.env.GIT_TOKEN }),
+			force: true
+        })
+        console.log(`Update for ${new Date().toUTCString()}`)
+    } catch (error) {
+        console.error(`Error pushing changes: ${error.stack}`)
+    }
 }
 
+const main = async () => {
+	await downloadFiles()
+	await pushChanges()
+}
+app.listen(process.env.SERVER_PORT || 3000, () => {
+	console.log(`Listening on ${process.env.SERVER_PORT || 3000}`)
+})
 main()
+cron.schedule("0 */1 * * *", () => {
+	console.log("Updating...")
+	main()
+})
