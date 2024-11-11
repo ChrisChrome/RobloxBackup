@@ -2,14 +2,14 @@ name: Run Node.js script every 4 hours and push changes
 
 on:
   schedule:
-    - cron: '35 * * * *'  # This means "every 4 hours"
+    - cron: '42 */2 * * *'  # This means "every 4 hours"
 
   # Allows for manual trigger if needed
   workflow_dispatch:
 
 jobs:
   run-script:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - name: Checkout repository
