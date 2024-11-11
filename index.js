@@ -87,7 +87,7 @@ Client.on("interactionCreate", async (interaction) => {
 			if (!assetId) return interaction.reply({ ephemeral: true, content: "How'd you even manage to run this without sending an ID. Whatever, put an ID in dingus." });
 			channel = interaction.options.getChannel("channel") || interaction.channel
 			await interaction.deferReply({ ephemeral: true })
-			assetInfo = await bulk.fetchAssetInfo({[assetId]: true})
+			assetInfo = await bulk.fetchAssetInfo({ [assetId]: true })
 			productName = interaction.options.getString("name") || assetInfo[assetId].asset.name
 			db.push(`/ids/${assetId}`, {
 				"name": productName,
@@ -145,144 +145,143 @@ function humanFileSize(bytes, si = false, dp = 1) {
 }
 
 const downloadFiles = async (ovr) => {
-	try {
-		const dbData = await db.getData("/ids");
-	} catch {
-		return console.log("No DB, add an asset perhaps?")
-	}
-	const ids = ovr ? { [ovr]: dbData[ovr] } : null || dbData
-	const data = await bulk.bulk(Object.keys(ids).map(id => id));
-	const assetInfo = await bulk.fetchAssetInfo(ids)
-	const fileDownloadPromises = Object.keys(data.data).map(async (id) => {
-		channel = await Client.channels.fetch(ids[id].discord_channel)
-		const fileData = data.data[id];
+	const dbData = await db.getData("/ids").then(async (dbData) => {
+		const ids = ovr ? { [ovr]: dbData[ovr] } : null || dbData
+		const data = await bulk.bulk(Object.keys(ids).map(id => id));
+		const assetInfo = await bulk.fetchAssetInfo(ids)
+		const fileDownloadPromises = Object.keys(data.data).map(async (id) => {
+			channel = await Client.channels.fetch(ids[id].discord_channel)
+			const fileData = data.data[id];
 
-		if (fileData.status === 'success') {
-			try {
-				const { url, type } = fileData;
-				const fileName = `${ids[id].name}.${type.ext}`;
-				const filePath = path.join('./tmp', fileName);
+			if (fileData.status === 'success') {
+				try {
+					const { url, type } = fileData;
+					const fileName = `${ids[id].name}.${type.ext}`;
+					const filePath = path.join('./tmp', fileName);
 
-				// Download the file using axios
-				const response = await axios.get(url, { responseType: 'stream' });
+					// Download the file using axios
+					const response = await axios.get(url, { responseType: 'stream' });
 
-				// Return a Promise that resolves when the file is downloaded and processed
-				return new Promise((resolve, reject) => {
-					const writer = fs.createWriteStream(filePath);
-					response.data.pipe(writer);
+					// Return a Promise that resolves when the file is downloaded and processed
+					return new Promise((resolve, reject) => {
+						const writer = fs.createWriteStream(filePath);
+						response.data.pipe(writer);
 
-					writer.on('finish', async () => {
-						try {
-							console.log(`Downloaded file: ${fileName}!`);
-							const hash = await hashFile(filePath);
+						writer.on('finish', async () => {
+							try {
+								console.log(`Downloaded file: ${fileName}!`);
+								const hash = await hashFile(filePath);
 
-							if (hash !== ids[id].hash) {
-								console.log(`File ${fileName} has changed`);
-								size = fs.statSync(filePath).size
-								file = new Discord.AttachmentBuilder(Buffer.from(fs.readFileSync(filePath)), { name: fileName })
-								channel.send({
-									embeds: [{
-										color: 0x00ff00,
-										title: assetInfo[id].asset.name,
-										url: `https://create.roblox.com/store/asset/${id}`,
-										fields: [
-											{
-												name: "Old Hash",
-												value: ids[id].hash,
-												inline: true
-											},
-											{
-												name: "New Hash",
-												value: hash,
-												inline: true
-											},
-											{
-												name: "Old Filesize",
-												value: humanFileSize(ids[id].filesize),
-												inline: true
-											},
-											{
-												name: "New Filesize",
-												value: humanFileSize(size),
-												inline: true
-											},
-											{
-												name: "Asset Name",
-												value: assetInfo[id].asset.name,
-												inline: true
-											},
-											{
-												name: "Asset ID",
-												value: `\`${id}\``,
-												inline: true
-											},
-											{
-												name: "Creator",
-												value: `[${assetInfo[id].creator.name}](https://roblox.com/${assetInfo[id].creator.type == 2 ? "groups" : "users"}/${assetInfo[id].creator.id}/profile)`,
-												inline: true
-											},
-											{
-												name: "Asset Description",
-												value: assetInfo[id].asset.description,
-												inline: false
-											},
-											{
-												name: "Timestamps",
-												value: `Created: <t:${Math.floor(new Date(assetInfo[id].asset.createdUtc) / 1000)}>\nUpdated: <t:${Math.floor(new Date(assetInfo[id].asset.updatedUtc) / 1000)}>`,
-												inline: true
-											}
-										]
-									}],
-									files: [file]
-								})
+								if (hash !== ids[id].hash) {
+									console.log(`File ${fileName} has changed`);
+									size = fs.statSync(filePath).size
+									file = new Discord.AttachmentBuilder(Buffer.from(fs.readFileSync(filePath)), { name: fileName })
+									channel.send({
+										embeds: [{
+											color: 0x00ff00,
+											title: assetInfo[id].asset.name,
+											url: `https://create.roblox.com/store/asset/${id}`,
+											fields: [
+												{
+													name: "Old Hash",
+													value: ids[id].hash,
+													inline: true
+												},
+												{
+													name: "New Hash",
+													value: hash,
+													inline: true
+												},
+												{
+													name: "Old Filesize",
+													value: humanFileSize(ids[id].filesize),
+													inline: true
+												},
+												{
+													name: "New Filesize",
+													value: humanFileSize(size),
+													inline: true
+												},
+												{
+													name: "Asset Name",
+													value: assetInfo[id].asset.name,
+													inline: true
+												},
+												{
+													name: "Asset ID",
+													value: `\`${id}\``,
+													inline: true
+												},
+												{
+													name: "Creator",
+													value: `[${assetInfo[id].creator.name}](https://roblox.com/${assetInfo[id].creator.type == 2 ? "groups" : "users"}/${assetInfo[id].creator.id}/profile)`,
+													inline: true
+												},
+												{
+													name: "Asset Description",
+													value: assetInfo[id].asset.description,
+													inline: false
+												},
+												{
+													name: "Timestamps",
+													value: `Created: <t:${Math.floor(new Date(assetInfo[id].asset.createdUtc) / 1000)}>\nUpdated: <t:${Math.floor(new Date(assetInfo[id].asset.updatedUtc) / 1000)}>`,
+													inline: true
+												}
+											]
+										}],
+										files: [file]
+									})
 
-								// Update the hash in the database
-								db.push(`/ids/${id}/hash`, hash);
-								db.push(`/ids/${id}/filesize`, size)
-							} else {
-								console.log(`No changes for file ${fileName}`);
+									// Update the hash in the database
+									db.push(`/ids/${id}/hash`, hash);
+									db.push(`/ids/${id}/filesize`, size)
+								} else {
+									console.log(`No changes for file ${fileName}`);
+								}
+
+								resolve(); // Resolve the Promise when all is done
+							} catch (err) {
+								reject(err); // Reject if there's an error during processing
 							}
+						});
 
-							resolve(); // Resolve the Promise when all is done
-						} catch (err) {
-							reject(err); // Reject if there's an error during processing
+						writer.on('error', (err) => {
+							reject(new Error(`Error downloading file ${fileName}: ${err.message}`));
+						});
+					});
+				} catch (error) {
+					console.error(`Error processing file ${id}: ${error.message}`);
+				}
+			} else {
+				console.log(`Failed to download file for ID: ${id}`);
+				channel.send({
+					embeds: [
+						{
+							title: `Error!`,
+							color: 0xff0000,
+							description: `An error occured while trying to check for new versions of this asset!`,
+							fields: [
+								{
+									name: "Error",
+									value: `${fileData.code} ${fileData.message}\n\`${fileData.additional}\``
+								}
+							]
 						}
-					});
-
-					writer.on('error', (err) => {
-						reject(new Error(`Error downloading file ${fileName}: ${err.message}`));
-					});
-				});
-			} catch (error) {
-				console.error(`Error processing file ${id}: ${error.message}`);
+					]
+				})
 			}
-		} else {
-			console.log(`Failed to download file for ID: ${id}`);
-			channel.send({
-				embeds: [
-					{
-						title: `Error!`,
-						color: 0xff0000,
-						description: `An error occured while trying to check for new versions of this asset!`,
-						fields: [
-							{
-								name: "Error",
-								value: `${fileData.code} ${fileData.message}\n\`${fileData.additional}\``
-							}
-						]
-					}
-				]
-			})
-		}
-	});
+		});
 
-	// Wait for all file download promises to complete
-	try {
-		await Promise.all(fileDownloadPromises);
-		console.log('All files processed successfully!');
-	} catch (error) {
-		console.error('Error processing some files:', error);
-	}
+		// Wait for all file download promises to complete
+		try {
+			await Promise.all(fileDownloadPromises);
+			console.log('All files processed successfully!');
+		} catch (error) {
+			console.error('Error processing some files:', error);
+		}
+	}).catch(() => {
+		return console.log("No DB, add an asset perhaps?")
+	})
 }
 
 
