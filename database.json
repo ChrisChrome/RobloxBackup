@@ -3,7 +3,11 @@
         "8533575827": {
             "name": "CortexMain",
             "hash": "c31ade2e99aa36c2e22ebeb4e2d1d15ffc6b37af",
-            "discord_channel": "1305615407285141604"
+            "discord_channel": "1305615407285141604",
+            "filesize": 0
+        },
+        "${id}": {
+            "filesize": 478360
         }
     }
 }
