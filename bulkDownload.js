@@ -1,7 +1,6 @@
 const codes = require("./codes.json")
 const assetTypes = require("./assetTypes.json")
 bulk = async (assetIds, inputCookie) => {
-	console.log(process.env.COOKIE)
 	// Impliment a rate limit of 25 requests per minute
 	if (!assetIds || !Array.isArray(assetIds)) {
 		return {
