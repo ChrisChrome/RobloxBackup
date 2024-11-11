@@ -77,8 +77,8 @@ const downloadFiles = async () => {
 									embeds: [{
 										color: 0x00ff00,
 										title: 'File Changed',
-										description: `<t:${Math.floor(new Date()/1000)}:f>`,
-										feilds: [
+										description: `ID: \`${id}\`\n<t:${Math.floor(new Date()/1000)}:f>`,
+										fields: [
 											{
 												name: "Old Hash",
 												value: ids[id].hash
@@ -113,6 +113,7 @@ const downloadFiles = async () => {
             }
         } else {
             console.log(`Failed to download file for ID: ${id}`);
+
         }
     });
 
