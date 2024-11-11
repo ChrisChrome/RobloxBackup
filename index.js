@@ -5,6 +5,7 @@ const axios = require("axios")
 const jsondb = require("node-json-db")
 const db = new jsondb.JsonDB(new jsondb.Config("database", true, true, "/", true))
 const fs = require('fs-extra')
+const cron = require("node-cron")
 const crypto = require("crypto")
 console.log(fs.readdirSync("."))
 if (!fs.existsSync("./tmp/")) {
@@ -19,7 +20,9 @@ if (!fs.existsSync("./backups/")) {
 }
 
 const Discord = require("discord.js")
-const hook = new Discord.WebhookClient({ url: process.env.WEBHOOK })
+const Client = new Discord.Client({intents: [
+	"Guilds"
+]})
 
 const hashFile = (filePath) => {
     return new Promise((resolve, reject) => {
@@ -67,14 +70,15 @@ const downloadFiles = async () => {
                             const hash = await hashFile(filePath);
 
                             if (hash !== ids[id].hash) {
-                                console.log(`File ${fileName} has changed, saving to Git repo...`);
-								hook.send({
+                                console.log(`File ${fileName} has changed`);
+								channel = await Client.channels.fetch(ids[id].discord_channel)
+								file = new Discord.AttachmentBuilder(Buffer.from(fs.readFileSync(filePath)), { name: fileName })
+								channel.send({
 									embeds: [{
 										color: 0x00ff00,
-										title: fileName,
-										url: `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/main/backups/${fileName}`,
-										description: `File has changed!`,
-										fields: [
+										title: 'File Changed',
+										description: `<t:${Math.floor(new Date()/1000)}:f>`,
+										feilds: [
 											{
 												name: "Old Hash",
 												value: ids[id].hash
@@ -83,11 +87,10 @@ const downloadFiles = async () => {
 												name: "New Hash",
 												value: hash
 											}
-										],
-										timestamp: new Date()
-									}]
+										]
+									}],
+									files: [file]
 								})
-                                await fs.copyFile(filePath, path.join(__dirname, "/backups/", fileName))
 
                                 // Update the hash in the database
                                 db.push(`/ids/${id}/hash`, hash);
@@ -122,9 +125,10 @@ const downloadFiles = async () => {
     }
 }
 
+Client.on('ready', async () => {
+	console.log(`Logged in as ${Client.user.displayName}`)
+	await downloadFiles();
+	cron.schedule("0 * * * *", downloadFiles)
+});
 
-const main = async () => {
-	await downloadFiles()
-}
-
-main()
+Client.login(process.env.TOKEN)
