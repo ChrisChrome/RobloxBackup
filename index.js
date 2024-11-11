@@ -72,6 +72,7 @@ const downloadFiles = async () => {
 									embeds: [{
 										color: 0x00ff00,
 										title: fileName,
+										url: `https://github.com/${process.env.GITHUB_REPOSITORY}`,
 										description: `File has changed!`,
 										fields: [
 											{
