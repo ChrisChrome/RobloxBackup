@@ -131,7 +131,7 @@ const downloadFiles = async () => {
 
 								// Update the hash in the database
 								db.push(`/ids/${id}/hash`, hash);
-								db.push('/ids/${id}/filesize', size)
+								db.push(`/ids/${id}/filesize`, size)
 							} else {
 								console.log(`No changes for file ${fileName}`);
 							}
