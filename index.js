@@ -39,8 +39,6 @@ const commands = [
 	{
 		name: "track",
 		description: "Start tracking an asset",
-		contexts: [0, 1, 2],
-		integration_types: [0, 1],
 		options: [
 			{
 				name: "id",
@@ -58,6 +56,19 @@ const commands = [
 				name: "channel",
 				description: "If this isn't set, it'll just use the current channel",
 				type: 7
+			}
+		],
+		default_member_permissions: 8
+	},
+	{
+		name: "untrack",
+		description: "Stop tracking an asset",
+		options: [
+			{
+				name: "id",
+				description: "Asset ID",
+				type: 4,
+				required: true
 			}
 		],
 		default_member_permissions: 8
@@ -97,6 +108,15 @@ Client.on("interactionCreate", async (interaction) => {
 			})
 			downloadFiles(assetId.toString()).then(() => {
 				interaction.editReply({ ephemeral: true, content: "Done!" })
+			})
+			break;
+		case "untrack":
+			assetId = interaction.options.getInteger("id");
+			if (!assetId) return interaction.reply({ ephemeral: true, content: "How'd you even manage to run this without sending an ID. Whatever, put an ID in dingus." });
+			db.delete(`/ids/${assetId}`).then(() => {
+				interaction.reply({ephemeral: true, content: "Deleted!"})
+			}).catch(() => {
+				interaction.reply({ephemeral: true, content: "Failed to delete, does it exist?"})
 			})
 			break;
 	}
