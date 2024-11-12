@@ -213,6 +213,7 @@ const downloadFiles = async (ovr) => {
 		if (!assetInfo.status) return console.error(`Oh no, an asset isn't accessable!!!!!!!!!`)
 		const fileDownloadPromises = Object.keys(data.data).map(async (id) => {
 			channel = await Client.channels.fetch(ids[id].discord_channel)
+			if (!channel) return console.error(`Channel for ${ids[id].name} doesnt exist!!!!!!!`)
 			const fileData = data.data[id];
 
 			if (fileData.status === 'success') {
