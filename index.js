@@ -10,16 +10,17 @@ const crypto = require("crypto")
 const noblox = require("noblox.js")
 noblox.setCookie(process.env.COOKIE)
 console.log(fs.readdirSync("."))
-if (!fs.existsSync("./tmp/")) {
-	fs.mkdirSync("./tmp/")
-} else {
-	fs.rmSync("./tmp/", { recursive: true, force: true })
-	fs.mkdirSync("./tmp/")
-}
 
-if (!fs.existsSync("./backups/")) {
-	fs.mkdirSync("./backups/")
+function clearTmp() {
+	if (!fs.existsSync("./tmp/")) {
+		fs.mkdirSync("./tmp/")
+	} else {
+		fs.rmSync("./tmp/", { recursive: true, force: true })
+		fs.mkdirSync("./tmp/")
+	}
 }
+clearTmp()
+
 
 const Discord = require("discord.js")
 const Client = new Discord.Client({
@@ -206,6 +207,7 @@ function humanFileSize(bytes, si = false, dp = 1) {
 }
 
 const downloadFiles = async (ovr) => {
+	clearTmp()
 	const dbData = await db.getData("/ids").then(async (dbData) => {
 		const ids = ovr ? { [ovr]: dbData[ovr] } : null || dbData
 		const data = await bulk.bulk(Object.keys(ids).map(id => id));
@@ -345,6 +347,7 @@ const downloadFiles = async (ovr) => {
 	}).catch(() => {
 		return console.log("No DB, add an asset perhaps?")
 	})
+	clearTmp()
 }
 
 
