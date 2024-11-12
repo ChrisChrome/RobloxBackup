@@ -1,5 +1,6 @@
 require("dotenv").config()
 const bulk = require("./bulkDownload.js")
+const assetTypes = require("./assetTypes.json")
 const path = require("path")
 const axios = require("axios")
 const jsondb = require("node-json-db")
@@ -72,6 +73,23 @@ const commands = [
 			}
 		],
 		default_member_permissions: 8
+	},
+	{
+		name: "download",
+		description: "Yoink :)",
+		options: [
+			{
+				name: "id",
+				description: "Asset ID",
+				type: 4,
+				required: true
+			},
+			{
+				name: "show",
+				description: "Whether or not other people can see the response of this command",
+				type: Discord.ApplicationCommandOptionType.Boolean
+			}
+		]
 	}
 ]
 
@@ -99,7 +117,8 @@ Client.on("interactionCreate", async (interaction) => {
 			channel = interaction.options.getChannel("channel") || interaction.channel
 			await interaction.deferReply({ ephemeral: true })
 			assetInfo = await bulk.fetchAssetInfo({ [assetId]: true })
-			productName = interaction.options.getString("name") || assetInfo[assetId].asset.name
+			if (!assetInfo.status) return interaction.editReply({ephemeral: true, content: "Asset is not published, or is otherwise inaccessable."});
+			productName = interaction.options.getString("name") || assetInfo.data[assetId].asset.name
 			db.push(`/ids/${assetId}`, {
 				"name": productName,
 				"hash": "",
@@ -114,10 +133,32 @@ Client.on("interactionCreate", async (interaction) => {
 			assetId = interaction.options.getInteger("id");
 			if (!assetId) return interaction.reply({ ephemeral: true, content: "How'd you even manage to run this without sending an ID. Whatever, put an ID in dingus." });
 			db.delete(`/ids/${assetId}`).then(() => {
-				interaction.reply({ephemeral: true, content: "Deleted!"})
+				interaction.reply({ ephemeral: true, content: "Deleted!" })
 			}).catch(() => {
-				interaction.reply({ephemeral: true, content: "Failed to delete, does it exist?"})
+				interaction.reply({ ephemeral: true, content: "Failed to delete, does it exist?" })
 			})
+			break;
+		case "download":
+			assetId = interaction.options.getInteger("id")
+			let show = !interaction.options.getBoolean("show");
+			if (show == null) show = true;
+			if (!assetId) return interaction.reply({ ephemeral: true, content: "How'd you even manage to run this without sending an ID. Whatever, put an ID in dingus." });
+			await interaction.deferReply({ ephemeral: show })
+			assetInfo = await bulk.fetchAssetInfo({ [assetId]: true })
+			if (!assetInfo.status) return interaction.editReply({ephemeral: true, content: "Asset is not published, or is otherwise inaccessable."});
+			downloadUrls = await bulk.bulk([assetId])
+			dl = downloadUrls.data[assetId]
+			if (dl.status == "success") {
+				console.log(assetInfo)
+				fileName = `${assetInfo.data[assetId].asset.name}.${assetTypes[assetInfo.data[assetId].asset.typeId].ext}`;
+				url = dl.url;
+				await interaction.editReply({ ephemeral: show, files: [{
+					name: fileName,
+					attachment: url
+				}] })
+			} else {
+				await interaction.editReply({ephemeral: show, content: `Error ${dl.code} ${dl.message}\n${dl.additional}`})
+			}
 			break;
 	}
 })
@@ -169,6 +210,7 @@ const downloadFiles = async (ovr) => {
 		const ids = ovr ? { [ovr]: dbData[ovr] } : null || dbData
 		const data = await bulk.bulk(Object.keys(ids).map(id => id));
 		const assetInfo = await bulk.fetchAssetInfo(ids)
+		if (!assetInfo.status) return console.error(`Oh no, an asset isn't accessable!!!!!!!!!`)
 		const fileDownloadPromises = Object.keys(data.data).map(async (id) => {
 			channel = await Client.channels.fetch(ids[id].discord_channel)
 			const fileData = data.data[id];
@@ -199,7 +241,7 @@ const downloadFiles = async (ovr) => {
 									channel.send({
 										embeds: [{
 											color: 0x00ff00,
-											title: assetInfo[id].asset.name,
+											title: assetInfo.data[id].asset.name,
 											url: `https://create.roblox.com/store/asset/${id}`,
 											fields: [
 												{
@@ -224,7 +266,7 @@ const downloadFiles = async (ovr) => {
 												},
 												{
 													name: "Asset Name",
-													value: assetInfo[id].asset.name,
+													value: assetInfo.data[id].asset.name,
 													inline: true
 												},
 												{
@@ -234,17 +276,17 @@ const downloadFiles = async (ovr) => {
 												},
 												{
 													name: "Creator",
-													value: `[${assetInfo[id].creator.name}](https://roblox.com/${assetInfo[id].creator.type == 2 ? "groups" : "users"}/${assetInfo[id].creator.id}/profile)`,
+													value: `[${assetInfo.data[id].creator.name}](https://roblox.com/${assetInfo.data[id].creator.type == 2 ? "groups" : "users"}/${assetInfo.data[id].creator.id}/profile)`,
 													inline: true
 												},
 												{
 													name: "Asset Description",
-													value: assetInfo[id].asset.description,
+													value: assetInfo.data[id].asset.description,
 													inline: false
 												},
 												{
 													name: "Timestamps",
-													value: `Created: <t:${Math.floor(new Date(assetInfo[id].asset.createdUtc) / 1000)}>\nUpdated: <t:${Math.floor(new Date(assetInfo[id].asset.updatedUtc) / 1000)}>`,
+													value: `Created: <t:${Math.floor(new Date(assetInfo.data[id].asset.createdUtc) / 1000)}>\nUpdated: <t:${Math.floor(new Date(assetInfo.data[id].asset.updatedUtc) / 1000)}>`,
 													inline: true
 												}
 											]

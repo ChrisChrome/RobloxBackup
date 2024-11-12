@@ -110,7 +110,7 @@ function fetchAssetInfo(ids) {
 
 			// Check if the response is successful
 			if (!response.ok) {
-				throw new Error(`Failed to fetch data: ${response.statusText}`);
+				return resolve({status: false})
 			}
 
 			// Parse the JSON response
@@ -124,7 +124,7 @@ function fetchAssetInfo(ids) {
 			}, {});
 			
 			// Resolve the promise with the result of the bulk operation
-			resolve(assetInfo);
+			resolve({status: true, data: assetInfo});
 		} catch (error) {
 			// Reject the promise if an error occurs
 			console.error('Error fetching asset info:', error);
