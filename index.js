@@ -33,9 +33,7 @@ const {
 	REST,
 	Routes
 } = require('discord.js');
-const rest = new REST({
-	version: '10'
-}).setToken(process.env.TOKEN);
+const rest = new REST().setToken(process.env.TOKEN);
 
 const commands = [
 	{
@@ -212,7 +210,7 @@ const downloadFiles = async (ovr) => {
 		const ids = ovr ? { [ovr]: dbData[ovr] } : null || dbData
 		const data = await bulk.bulk(Object.keys(ids).map(id => id));
 		const assetInfo = await bulk.fetchAssetInfo(ids)
-		if (!assetInfo.status) return console.error(`Oh no, an asset isn't accessable!!!!!!!!!`)
+		if (!assetInfo.status) return console.error(assetInfo)
 		const fileDownloadPromises = Object.keys(data.data).map(async (id) => {
 			channel = await Client.channels.fetch(ids[id].discord_channel)
 			if (!channel) return console.error(`Channel for ${ids[id].name} doesnt exist!!!!!!!`)
